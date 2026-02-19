@@ -1,0 +1,6 @@
+name = "algo-tax"
+main = "proxy-worker/index.js"
+compatibility_date = "2024-02-19"
+
+[observability]
+enabled = true
