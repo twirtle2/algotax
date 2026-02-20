@@ -10,7 +10,9 @@ export default function KoinlyExport() {
     const [transactions, setTransactions] = useState<UnifiedTransaction[]>([])
     const [loading, setLoading] = useState(true)
     const financialYear = useAppStore((s) => s.financialYear)
+    const region = useAppStore((s) => s.region)
     const wallets = useAppStore((s) => s.wallets)
+
     const options = useAppStore((s) => s.koinlyOptions)
     const setOptions = useAppStore((s) => s.setKoinlyOptions)
     const [showOtherAsas, setShowOtherAsas] = useState(false)
@@ -46,9 +48,10 @@ export default function KoinlyExport() {
         let txnsToProcess = transactions
 
         if (!options.exportAllHistory && financialYear) {
-            const { start, end } = getFYBoundaries(financialYear)
+            const { start, end } = getFYBoundaries(financialYear, region)
             txnsToProcess = transactions.filter(tx => tx.timestamp >= start && tx.timestamp <= end)
         }
+
 
         return filterForKoinly(txnsToProcess, wallets.map(w => w.address), options)
     }, [transactions, wallets, options, financialYear])
@@ -152,7 +155,8 @@ export default function KoinlyExport() {
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `koinly_export_${financialYear}_${Date.now()}.csv`)
+        link.setAttribute('download', `koinly_export_${region}_${financialYear}_${Date.now()}.csv`)
+
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()
@@ -467,7 +471,8 @@ export default function KoinlyExport() {
                                     </label>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold">Export All History</span>
-                                        <span className="xsmall text-muted">Ignore financial year {financialYear} filter</span>
+                                        <span className="xsmall text-muted">Ignore {region} financial year {financialYear} filter</span>
+
                                     </div>
                                 </div>
                             </div>
@@ -568,9 +573,10 @@ export default function KoinlyExport() {
                             ) : (
                                 paginatedRows.map((row, idx) => {
                                     const isMerged = 'sentAmount' in row
-                                    const date = new Date(row.timestamp * 1000).toLocaleDateString('en-AU', {
+                                    const date = new Date(row.timestamp * 1000).toLocaleString(region === 'AU' ? 'en-AU' : 'en-US', {
                                         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                                     })
+
 
                                     if (isMerged) {
                                         const walletAddr = row.walletAddress

@@ -1,12 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AppSettings, WalletConfig, SupportedCurrency, KoinlyExportOptions } from '@/types'
+import type { AppSettings, WalletConfig, Region, KoinlyExportOptions } from '@/types'
+
+
 
 interface AppStore extends AppSettings {
     // Actions
     setFinancialYear: (fy: string) => void
-    setCurrency: (currency: SupportedCurrency) => void
+    setRegion: (region: Region) => void
     addWallet: (wallet: WalletConfig) => void
+
     removeWallet: (address: string) => void
     updateWalletLabel: (address: string, label: string) => void
     getWalletAddresses: () => string[]
@@ -21,8 +24,9 @@ export const useAppStore = create<AppStore>()(
         (set, get) => ({
             // State
             financialYear: '2025-26',
-            currency: 'AUD',
+            region: 'AU',
             wallets: [],
+
             koinlyOptions: {
                 dustThreshold: 0.01,
                 excludeNFTs: true,
@@ -36,7 +40,8 @@ export const useAppStore = create<AppStore>()(
 
             // Actions
             setFinancialYear: (fy) => set({ financialYear: fy }),
-            setCurrency: (currency) => set({ currency }),
+            setRegion: (region) => set({ region }),
+
 
             addWallet: (wallet) =>
                 set((state) => {
@@ -68,6 +73,23 @@ export const useAppStore = create<AppStore>()(
         }),
         {
             name: 'algo-tax-settings',
+            version: 1,
+            migrate: (persistedState: any, version: number) => {
+                if (version === 0) {
+                    // Migrate currency to region
+                    const currencyToRegion: Record<string, Region> = {
+                        'AUD': 'AU',
+                        'USD': 'US',
+                        'GBP': 'GB',
+                        'CAD': 'CA',
+                        'EUR': 'EU'
+                    }
+                    persistedState.region = currencyToRegion[persistedState.currency] || 'AU'
+                    delete persistedState.currency
+                }
+                return persistedState
+            }
         }
+
     )
 )

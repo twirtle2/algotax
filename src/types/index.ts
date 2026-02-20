@@ -22,7 +22,9 @@ export type TxClassification =
 export type TxSource = 'algorand' | 'coinbase'
 export type AssetIdentifier = number | 'ALGO'
 export type CostBasisMethod = 'FIFO' | 'LIFO'
-export type SupportedCurrency = 'AUD' | 'USD' | 'GBP' | 'EUR' | 'CAD'
+export type Region = 'AU' | 'US' | 'GB' | 'CA' | 'EU'
+export type SupportedCurrency = 'AUD' | 'USD' | 'GBP' | 'CAD' | 'EUR'
+
 
 // ─── Unified Transaction ─────────────────────────────────────────────
 export interface UnifiedTransaction {
@@ -55,9 +57,10 @@ export interface WalletConfig {
 // ─── App Settings ───────────────────────────────────────────────────
 export interface AppSettings {
     financialYear: string // e.g. "2025-26"
-    currency: SupportedCurrency
+    region: Region
     wallets: WalletConfig[]
 }
+
 
 export interface KoinlyExportOptions {
     dustThreshold: number // in ALGO

@@ -4,6 +4,8 @@ import { useAppStore } from '@/store/appStore'
 import type { UnifiedTransaction, TxClassification } from '@/types'
 
 import { getFYBoundaries } from '@/utils/date-utils'
+import { REGION_CONFIGS } from '@/constants/regions'
+
 
 const CLASSIFICATION_LABELS: Record<TxClassification, string> = {
     buy: 'Buy',
@@ -72,7 +74,9 @@ function formatFiat(value: number, currency: string = 'AUD'): string {
 
 export default function Transactions() {
     const financialYear = useAppStore((s) => s.financialYear)
-    const currency = useAppStore((s) => s.currency)
+    const region = useAppStore((s) => s.region)
+    const currency = REGION_CONFIGS[region].currency
+
     const [transactions, setTransactions] = useState<UnifiedTransaction[]>([])
     const [loading, setLoading] = useState(true)
     const [filterClassification, setFilterClassification] = useState<string>('all')
@@ -84,7 +88,8 @@ export default function Transactions() {
         async function load() {
             setLoading(true)
             try {
-                const { start, end } = getFYBoundaries(financialYear || '2024-25')
+                const { start, end } = getFYBoundaries(financialYear || '2024-25', region)
+
                 const txns = await db.transactions
                     .where('timestamp')
                     .between(start, end, true, true)

@@ -3,14 +3,17 @@ import { useAppStore } from '@/store/appStore'
 import { db, upsertTransactions, exportAllData, importData, clearAllData } from '@/db'
 import { fetchAllTransactions, type FetchProgress } from '@/services/nodely'
 import { classifyAllTransactions, reclassifyTransactions } from '@/services/classifier'
-import type { WalletConfig, SupportedCurrency } from '@/types'
+import type { WalletConfig, Region } from '@/types'
+import { REGION_CONFIGS } from '@/constants/regions'
+
 
 export default function Settings() {
     const wallets = useAppStore((s) => s.wallets)
     const addWallet = useAppStore((s) => s.addWallet)
     const removeWallet = useAppStore((s) => s.removeWallet)
-    const currency = useAppStore((s) => s.currency)
-    const setCurrency = useAppStore((s) => s.setCurrency)
+    const region = useAppStore((s) => s.region)
+    const setRegion = useAppStore((s) => s.setRegion)
+
 
     const [newAddress, setNewAddress] = useState('')
     const [newLabel, setNewLabel] = useState('')
@@ -315,23 +318,24 @@ export default function Settings() {
                 <h3>Regional Preferences</h3>
                 <div className="card mb-lg">
                     <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
-                        <div className="input-group" style={{ maxWidth: 240 }}>
-                            <label>Display Currency</label>
+                        <div className="input-group" style={{ maxWidth: 300 }}>
+                            <label>Tax Region</label>
                             <select
                                 className="select"
-                                value={currency}
-                                onChange={(e) => setCurrency(e.target.value as SupportedCurrency)}
+                                value={region}
+                                onChange={(e) => setRegion(e.target.value as Region)}
                             >
-                                <option value="AUD">🇦🇺 AUD</option>
-                                <option value="USD">🇺🇸 USD</option>
-                                <option value="GBP">🇬🇧 GBP</option>
-                                <option value="EUR">🇪🇺 EUR</option>
-                                <option value="CAD">🇨🇦 CAD</option>
+                                {Object.values(REGION_CONFIGS).map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.flag} {r.name} ({r.currency})
+                                    </option>
+                                ))}
                             </select>
                             <p className="text-secondary xsmall mt-1">
-                                Used for labels in Koinly export.
+                                Defines fiscal year boundaries and export currency.
                             </p>
                         </div>
+
                     </div>
                 </div>
             </div>
