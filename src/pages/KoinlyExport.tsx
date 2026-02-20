@@ -554,15 +554,42 @@ export default function KoinlyExport() {
                                         )
                                     }
 
-                                    const classification = row.manualClassification ?? row.classification
-                                    const isOut = ['sell', 'transfer_out', 'nft_sale', 'lp_add'].includes(classification)
-                                    const isIn = ['buy', 'transfer_in', 'nft_purchase', 'nft_mint', 'staking_reward', 'governance_reward', 'airdrop', 'income_other', 'lp_remove'].includes(classification)
+                                    let classification = row.manualClassification ?? row.classification
+                                    let isOut = ['sell', 'transfer_out', 'nft_sale', 'lp_add'].includes(classification)
+                                    let isIn = ['buy', 'transfer_in', 'nft_purchase', 'nft_mint', 'staking_reward', 'governance_reward', 'airdrop', 'income_other', 'lp_remove'].includes(classification)
 
                                     // Correctly identify owned address
-                                    const fromOwn = row.fromAddress && ownAddressesSet.has(row.fromAddress.toUpperCase())
-                                    const toOwn = row.toAddress && ownAddressesSet.has(row.toAddress.toUpperCase())
-                                    const walletAddr = fromOwn ? row.fromAddress : (toOwn ? row.toAddress : row.fromAddress)
-                                    const walletName = wallets.find(w => w.address === walletAddr)?.label || `${walletAddr?.slice(0, 4)}...`
+                                    const fromOwn = row.fromAddress ? ownAddressesSet.has(row.fromAddress.toUpperCase()) : false
+                                    const toOwn = row.toAddress ? ownAddressesSet.has(row.toAddress.toUpperCase()) : false
+
+                                    let walletAddr = row.fromAddress
+                                    if (walletFilter !== 'all') {
+                                        const normalizedFilter = walletFilter.toUpperCase()
+                                        walletAddr = wallets.find(w => w.address.toUpperCase() === normalizedFilter)?.address || walletFilter
+
+                                        // Force UI perspective based on the filtered wallet for standard transfers
+                                        if (classification === 'transfer_in' || classification === 'transfer_out') {
+                                            if (row.fromAddress?.toUpperCase() === normalizedFilter) {
+                                                isOut = true
+                                                isIn = false
+                                                classification = 'transfer_out' as any
+                                            } else if (row.toAddress?.toUpperCase() === normalizedFilter) {
+                                                isOut = false
+                                                isIn = true
+                                                classification = 'transfer_in' as any
+                                            }
+                                        }
+                                    } else {
+                                        if (fromOwn && toOwn) {
+                                            walletAddr = isIn ? row.toAddress : row.fromAddress
+                                        } else if (fromOwn) {
+                                            walletAddr = row.fromAddress
+                                        } else if (toOwn) {
+                                            walletAddr = row.toAddress
+                                        }
+                                    }
+
+                                    const walletName = wallets.find(w => w.address === walletAddr)?.label || (walletAddr ? `${walletAddr.slice(0, 4)}...` : 'Unknown')
 
                                     return (
                                         <tr key={row.id}>
