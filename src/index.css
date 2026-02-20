@@ -791,29 +791,6 @@ tr:last-child td {
   text-decoration: underline;
 }
 
-.disclaimer-box {
-  margin-top: var(--space-lg);
-  padding: var(--space-md);
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-}
-
-.disclaimer-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--color-warning);
-  text-transform: uppercase;
-  margin-bottom: var(--space-xs);
-  display: block;
-}
-
-.disclaimer-text {
-  font-size: 0.7rem;
-  line-height: 1.4;
-  color: var(--color-text-muted);
-}
-
 /* Toggle Switch */
 .toggle-switch {
   position: relative;

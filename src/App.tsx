@@ -56,15 +56,6 @@ export default function App() {
                         >
                             Powered by Nodely
                         </a>
-
-                        <div className="disclaimer-box">
-                            <span className="disclaimer-title">Disclaimer</span>
-                            <p className="disclaimer-text">
-                                AlgoTax is a utility tool to help format transaction data and is not tax advice.
-                                Accuracy depends on Algorand node API responses. Always verify your history and
-                                consult a professional before lodging a return.
-                            </p>
-                        </div>
                     </div>
                 </div>
             </aside>
