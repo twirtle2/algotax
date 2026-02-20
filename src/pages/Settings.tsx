@@ -208,10 +208,22 @@ export default function Settings() {
                                         </span>
                                         <button
                                             className="btn btn-sm btn-secondary"
-                                            onClick={() => syncWallet(wallet.address)}
+                                            onClick={() => syncWallet(wallet.address, false)}
                                             disabled={syncing}
                                         >
                                             Sync
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-secondary"
+                                            onClick={() => {
+                                                if (confirm(`Full Re-sync for ${wallet.label}? This will refetch all transactions from the beginning.`)) {
+                                                    syncWallet(wallet.address, true)
+                                                }
+                                            }}
+                                            disabled={syncing}
+                                            title="Force a full re-sync from the beginning of time"
+                                        >
+                                            ⚡ Force Sync
                                         </button>
                                         <button
                                             className="btn btn-sm btn-danger"
