@@ -428,10 +428,8 @@ export default function KoinlyExport() {
                         </div>
                     )}
 
-                    <div className="alert alert-info mt-lg">
-                        <p><strong>Tip:</strong> Koinly counts transactions. Reducing this number saves you money on their annual plans.</p>
-                    </div>
                 </div>
+
             </div>
 
             {/* Preview Table */}
