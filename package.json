@@ -2,6 +2,7 @@
   "name": "algo-tax-au",
   "private": true,
   "version": "0.1.0",
+  "homepage": "https://twirtle2.github.io/algotax",
   "type": "module",
   "scripts": {
     "dev": "vite",
