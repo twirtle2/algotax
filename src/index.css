@@ -770,3 +770,23 @@ tr:last-child td {
   font-weight: 600;
   color: var(--color-text-primary);
 }
+
+.sidebar-footer {
+  margin-top: var(--space-md);
+  text-align: center;
+}
+
+.nodely-link {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.nodely-link:hover {
+  color: var(--color-accent);
+  opacity: 1;
+  text-decoration: underline;
+}

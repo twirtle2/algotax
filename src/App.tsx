@@ -46,6 +46,17 @@ export default function App() {
                             <option key={fy} value={fy}>FY {fy}</option>
                         ))}
                     </select>
+
+                    <div className="sidebar-footer">
+                        <a
+                            href="http://nodely.io/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="nodely-link"
+                        >
+                            Powered by Nodely
+                        </a>
+                    </div>
                 </div>
             </aside>
 
