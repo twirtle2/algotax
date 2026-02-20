@@ -405,8 +405,13 @@ function ReclassifyButton({ wallets }: { wallets: WalletConfig[] }) {
             const ownAddresses = wallets.map(w => w.address)
             const updated = await reclassifyTransactions(allTxns, ownAddresses)
 
+            setMsg('Clearing old records...')
+            // We clear everything before saving to ensure IDs are updated (format transition)
+            await db.transactions.clear()
+
             setMsg('Saving updates...')
             await upsertTransactions(updated)
+
 
             setStatus('done')
             setMsg(`✅ Re-classified ${updated.length} transactions`)
