@@ -196,241 +196,290 @@ export default function KoinlyExport() {
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-lg mb-lg">
-                {/* Options Panel */}
-                <div className="card md:col-span-1">
-                    <div className="card-header">
-                        <h3 className="h4">Export Options</h3>
+            {/* Consolidated Export Options */}
+            <div className="card mb-lg" style={{ maxWidth: '800px' }}>
+                <div className="card-header" style={{ marginBottom: 'var(--space-lg)' }}>
+                    <h3 className="h4">Export Options</h3>
+                </div>
+
+                <div className="flex flex-col">
+                    {/* Dust Threshold */}
+                    <div className="mb-lg pt-sm">
+                        <div className="flex justify-between items-center mb-sm">
+                            <label className="text-sm font-bold">Dust Threshold</label>
+                            <span className="badge badge-neutral text-mono" style={{ background: 'rgba(91, 156, 245, 0.1)', color: 'var(--color-info)' }}>
+                                {options.dustThreshold} ALGO
+                            </span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="0.1"
+                            step="0.001"
+                            value={options.dustThreshold}
+                            onChange={(e) => setOptions({ ...options, dustThreshold: parseFloat(e.target.value) })}
+                            style={{ width: '100%', height: '4px', appearance: 'none', background: 'var(--color-bg-tertiary)', borderRadius: '2px', outline: 'none' }}
+                        />
                     </div>
-                    <div className="flex flex-col gap-md">
-                        <div className="input-group">
-                            <label>Dust Threshold (ALGO)</label>
-                            <div className="flex items-center gap-sm">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="0.1"
-                                    step="0.001"
-                                    value={options.dustThreshold}
-                                    onChange={(e) => setOptions({ ...options, dustThreshold: parseFloat(e.target.value) })}
-                                    style={{ flex: 1 }}
-                                />
-                                <span className="text-mono xsmall">{options.dustThreshold}</span>
+
+                    <div className="flex flex-col">
+                        {/* Toggle Rows */}
+                        {[
+                            {
+                                label: 'Exclude Internal Transfers',
+                                desc: 'Moves between your own wallets with no tax event',
+                                checked: options.excludeOwnTransfers,
+                                count: stats.excludedOwnTransfers,
+                                onChange: (val: boolean) => setOptions({ ...options, excludeOwnTransfers: val })
+                            },
+                            {
+                                label: 'Exclude ASA Opt-ins',
+                                desc: 'Zero-value transactions required to receive tokens',
+                                checked: options.excludeOptIns,
+                                count: stats.excludedOptIns + stats.excludedZeroAmount,
+                                onChange: (val: boolean) => setOptions({ ...options, excludeOptIns: val })
+                            },
+                            {
+                                label: 'Exclude NFT Activity',
+                                desc: 'NFT mints, transfers, and marketplace interactions',
+                                checked: options.excludeNFTs,
+                                count: stats.excludedNFTs,
+                                onChange: (val: boolean) => setOptions({ ...options, excludeNFTs: val })
+                            },
+                            {
+                                label: 'Exclude Other Zero-Amount',
+                                desc: 'App calls and contract interactions with no value moved',
+                                checked: options.excludeZeroAmount,
+                                count: stats.excludedAppCalls,
+                                onChange: (val: boolean) => setOptions({ ...options, excludeZeroAmount: val })
+                            }
+                        ].map((row, i) => (
+                            <div key={i} className="flex items-center justify-between py-md border-top">
+                                <div className="flex items-center gap-md">
+                                    <label className="toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={row.checked}
+                                            onChange={(e) => row.onChange(e.target.checked)}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </label>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">{row.label}</span>
+                                        <span className="xsmall text-muted">{row.desc}</span>
+                                    </div>
+                                </div>
+                                <span className={`font-bold ${row.count > 0 ? 'text-loss' : 'opacity-40'} mono text-sm`}>
+                                    {row.count}
+                                </span>
+                            </div>
+                        ))}
+
+                        {/* ASA Filter Row (Special) */}
+                        <div className="py-md border-top">
+                            <div className="flex items-center justify-between mb-md">
+                                <div className="flex items-center gap-md">
+                                    <label className="toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.excludeASAs}
+                                            onChange={(e) => setOptions({ ...options, excludeASAs: e.target.checked })}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </label>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">Filter Non-ALGO Token Transactions</span>
+                                        <p className="xsmall text-muted">
+                                            Hides micro-transactions and dust rewards in ASA tokens — <span className="font-bold text-primary">{stats.excludedASAs} removed</span>. Pin specific tokens below to keep them.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className={`font-bold ${stats.excludedASAs > 0 ? 'text-loss' : 'opacity-40'} mono text-sm`}>
+                                    {stats.excludedASAs}
+                                </span>
+                            </div>
+
+                            {options.excludeASAs && (
+                                <div className="ml-xl pl-md">
+                                    <div className="alert alert-info border-none mb-lg" style={{ background: 'rgba(91, 156, 245, 0.05)', borderRadius: 'var(--radius-md)' }}>
+                                        <p className="xsmall">
+                                            <strong className="text-info">How this works:</strong> All non-ALGO token transactions are excluded by default. Toggle individual tokens <span className="text-info font-bold">on</span> to include their transactions in the export anyway.
+                                        </p>
+                                    </div>
+
+                                    {/* Whitelisted Tokens */}
+                                    <div className="mb-lg">
+                                        <span className="xsmall font-bold text-muted uppercase tracking-wider block mb-sm">Always include these tokens</span>
+                                        <div className="flex flex-wrap gap-sm">
+                                            {options.whitelistedAssetIds.map(id => {
+                                                const name = assetNames[id] || id
+                                                return (
+                                                    <div
+                                                        key={id}
+                                                        className="token-chip whitelisted"
+                                                        onClick={() => {
+                                                            setOptions((prev: KoinlyExportOptions) => ({
+                                                                ...prev,
+                                                                whitelistedAssetIds: prev.whitelistedAssetIds.filter(w => w !== id)
+                                                            }))
+                                                        }}
+                                                    >
+                                                        <span className="legend-dot" style={{ background: 'var(--color-info)' }}></span>
+                                                        {name}
+                                                    </div>
+                                                )
+                                            })}
+                                            {options.whitelistedAssetIds.length === 0 && (
+                                                <span className="xsmall opacity-40 italic">No tokens pinned yet</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Other Filtered Tokens */}
+                                    <div className="mb-md">
+                                        <div className="flex items-center gap-sm mb-sm">
+                                            <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }}></div>
+                                            <span className="xsmall font-bold text-muted uppercase tracking-wider">
+                                                Other Filtered Tokens ({Object.keys(stats.excludedASAMapping).length})
+                                            </span>
+                                            <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }}></div>
+                                        </div>
+
+                                        <span className="xsmall font-bold text-muted uppercase tracking-wider block mb-sm">Major Assets Detected</span>
+                                        <div className="flex flex-wrap gap-sm mb-md">
+                                            {/* Predefined Major Assets */}
+                                            {([
+                                                { name: 'USDC', id: 31566704 },
+                                                { name: 'goBTC', id: 386192725 },
+                                                { name: 'goETH', id: 386195940 },
+                                                { name: 'gALGO', id: 793124631 },
+                                                { name: 'xALGO', id: 1134696561 },
+                                                { name: 'CHIPS', id: 388592191 },
+                                                { name: 'VEST', id: 594511654 },
+                                                { name: 'BANK', id: 900643714 }
+                                            ] as const).map(asset => {
+                                                const isWhitelisted = options.whitelistedAssetIds.includes(asset.id)
+                                                if (isWhitelisted) return null
+
+                                                const mapping = stats.excludedASAMapping[asset.id.toString()]
+                                                // Only show if it's actually present in the excluded list or it's a "major" one we want to suggest
+                                                if (!mapping && !isWhitelisted) {
+                                                    // Optional: only show if it exists in the user's transactions? 
+                                                    // For now follow mockup and show these common ones if they are "possible"
+                                                }
+
+                                                const isIncludedInExport = !!mapping && mapping.count > 0
+                                                const stateClass = isIncludedInExport ? 'included' : 'excluded'
+                                                const dotColor = isIncludedInExport ? 'var(--color-gain)' : 'var(--color-text-muted)'
+
+                                                // If it's not in the mapping and not whitelisted, we still show it in grey if it's "Major"
+                                                return (
+                                                    <div
+                                                        key={asset.id}
+                                                        className={`token-chip ${stateClass}`}
+                                                        onClick={() => {
+                                                            setOptions((prev: KoinlyExportOptions) => ({
+                                                                ...prev,
+                                                                whitelistedAssetIds: [...prev.whitelistedAssetIds, asset.id]
+                                                            }))
+                                                        }}
+                                                    >
+                                                        <span className="legend-dot" style={{ background: dotColor }}></span>
+                                                        {asset.name}
+                                                        {mapping && mapping.count > 0 && <span className="chip-count">{mapping.count}</span>}
+                                                    </div>
+                                                )
+                                            })}
+
+                                            {/* More Toggle */}
+                                            {!showOtherAsas && Object.keys(stats.excludedASAMapping).length > 8 && (
+                                                <button
+                                                    className="token-chip excluded"
+                                                    onClick={() => setShowOtherAsas(true)}
+                                                >
+                                                    + {Object.keys(stats.excludedASAMapping).length - 8} more
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {showOtherAsas && (
+                                            <div className="flex flex-wrap gap-sm p-md bg-surface rounded mb-md">
+                                                {Object.entries(stats.excludedASAMapping)
+                                                    .filter(([id]) => !Object.values(KNOWN_ASSETS).includes(parseInt(id)))
+                                                    .sort(([, a], [, b]) => b.count - a.count)
+                                                    .map(([id, info]) => {
+                                                        const assetId = id === 'ALGO' ? 'ALGO' : parseInt(id)
+                                                        const isWhitelisted = options.whitelistedAssetIds.includes(assetId as any)
+                                                        if (isWhitelisted) return null
+
+                                                        return (
+                                                            <div
+                                                                key={id}
+                                                                className="token-chip excluded"
+                                                                onClick={() => {
+                                                                    setOptions((prev: KoinlyExportOptions) => ({
+                                                                        ...prev,
+                                                                        whitelistedAssetIds: [...prev.whitelistedAssetIds, assetId as any]
+                                                                    }))
+                                                                }}
+                                                            >
+                                                                <span className="legend-dot" style={{ background: 'var(--color-text-muted)' }}></span>
+                                                                {info.name || id}
+                                                                <span className="chip-count">{info.count}</span>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                <button className="btn-text xsmall w-full text-center mt-sm" onClick={() => setShowOtherAsas(false)}>Show Less</button>
+                                            </div>
+                                        )}
+
+                                        {/* Legend */}
+                                        <div className="flex gap-lg mt-md pt-sm opacity-80">
+                                            <div className="legend-item">
+                                                <span className="legend-dot" style={{ background: 'var(--color-info)' }}></span>
+                                                Always included
+                                            </div>
+                                            <div className="legend-item">
+                                                <span className="legend-dot" style={{ background: 'var(--color-gain)' }}></span>
+                                                Included this export
+                                            </div>
+                                            <div className="legend-item">
+                                                <span className="legend-dot" style={{ background: 'var(--color-text-muted)' }}></span>
+                                                Excluded
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Export All History (Moved here) */}
+                        <div className="py-md border-top">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-md">
+                                    <label className="toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.exportAllHistory}
+                                            onChange={(e) => setOptions({ ...options, exportAllHistory: e.target.checked })}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </label>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">Export All History</span>
+                                        <span className="xsmall text-muted">Ignore financial year {financialYear} filter</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <label className="flex items-center gap-sm cursor-pointer p-sm bg-primary-light rounded border border-primary">
-                            <input
-                                type="checkbox"
-                                checked={options.exportAllHistory}
-                                onChange={(e) => setOptions({ ...options, exportAllHistory: e.target.checked })}
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold">Export All History</span>
-                                <span className="xsmall opacity-80">Ignore FY {financialYear} filter</span>
-                            </div>
-                        </label>
-
-                        <label className="flex items-center gap-sm cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={options.excludeOwnTransfers}
-                                onChange={(e) => setOptions({ ...options, excludeOwnTransfers: e.target.checked })}
-                            />
-                            <span className="text-sm">Exclude Internal Transfers</span>
-                        </label>
-
-                        <label className="flex items-center gap-sm cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={options.excludeOptIns}
-                                onChange={(e) => setOptions({ ...options, excludeOptIns: e.target.checked })}
-                            />
-                            <span className="text-sm">Exclude ASA Opt-ins</span>
-                        </label>
-
-                        <label className="flex items-center gap-sm cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={options.excludeASAs}
-                                onChange={(e) => setOptions({ ...options, excludeASAs: e.target.checked })}
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm">Exclude ASA (non-ALGO) Transactions</span>
-                                <span className="xsmall text-muted">Hides micro-transactions/rewards in tokens</span>
-                            </div>
-                        </label>
-
-                        <label className="flex items-center gap-sm cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={options.excludeNFTs}
-                                onChange={(e) => setOptions({ ...options, excludeNFTs: e.target.checked })}
-                            />
-                            <span className="text-sm">Exclude NFT Activity</span>
-                        </label>
-
-                        <label className="flex items-center gap-sm cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={options.excludeZeroAmount}
-                                onChange={(e) => setOptions({ ...options, excludeZeroAmount: e.target.checked })}
-                            />
-                            <span className="text-sm">Exclude Other Zero-Amount</span>
-                        </label>
-
-                        <button className="btn btn-primary mt-md" onClick={handleDownload}>
+                        <button className="btn btn-primary mt-xl py-md w-full" onClick={handleDownload} style={{ borderRadius: 'var(--radius-md)', fontWeight: '700' }}>
                             <span>📥</span> Download Koinly CSV
                         </button>
                     </div>
                 </div>
-
-                {/* Filter Summary */}
-                <div className="card md:col-span-2">
-                    <div className="card-header">
-                        <h3 className="h4">Filtering Details</h3>
-                    </div>
-                    <div className="flex flex-col gap-sm">
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">Dust Transactions ({'<'} {options.dustThreshold} ALGO)</span>
-                            <span className="text-loss font-bold">{stats.excludedDust}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">Internal (Own Wallet) Transfers</span>
-                            <span className="text-loss font-bold">{stats.excludedOwnTransfers}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">ASA Opt-ins / Zero-val transfers</span>
-                            <span className="text-loss font-bold">{stats.excludedOptIns + stats.excludedZeroAmount}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">Standard App Calls (no value moved)</span>
-                            <span className="text-loss font-bold">{stats.excludedAppCalls}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">ASA (non-ALGO) Transactions</span>
-                            <span className="text-loss font-bold">{stats.excludedASAs}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-sm bg-surface rounded">
-                            <span className="text-sm">NFT Transactions</span>
-                            <span className="text-loss font-bold">{stats.excludedNFTs}</span>
-                        </div>
-                    </div>
-
-                    {/* Excluded ASAs List */}
-                    {options.excludeASAs && Object.keys(stats.excludedASAMapping).length > 0 && (
-                        <div className="mt-lg">
-                            <h4 className="h5 mb-sm">Filtered Assets (ASAs)</h4>
-                            <p className="xsmall text-muted mb-md">These were excluded. Choose assets to include in the export anyway.</p>
-
-                            {/* Major Assets Quick Add */}
-                            <div className="mb-md">
-                                <span className="xsmall font-bold opacity-60 uppercase tracking-wider block mb-sm">Major Assets</span>
-                                <div className="flex flex-wrap gap-xs">
-                                    {([
-                                        { name: 'USDC', id: KNOWN_ASSETS.USDC as number },
-                                        { name: 'gALGO', id: KNOWN_ASSETS.gALGO as number },
-                                        { name: 'xALGO', id: KNOWN_ASSETS.xALGO as number },
-                                        { name: 'goBTC', id: KNOWN_ASSETS.goBTC as number },
-                                        { name: 'goETH', id: KNOWN_ASSETS.goETH as number }
-                                    ] as const).map(asset => {
-                                        const isWhitelisted = options.whitelistedAssetIds.includes(asset.id)
-                                        const count = stats.excludedASAMapping[asset.id.toString()]?.count || 0
-
-                                        if (isWhitelisted) return null
-
-                                        return (
-                                            <button
-                                                key={asset.id}
-                                                className="btn btn-secondary btn-sm flex items-center gap-xs"
-                                                onClick={() => {
-                                                    setOptions((prev: KoinlyExportOptions) => ({
-                                                        ...prev,
-                                                        whitelistedAssetIds: [...prev.whitelistedAssetIds, asset.id]
-                                                    }))
-                                                }}
-                                            >
-                                                <span>+</span>
-                                                <span>{asset.name}</span>
-                                                {count > 0 && <span className="opacity-60 xsmall">({count})</span>}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Other Assets Collapsible */}
-                            <div>
-                                <button
-                                    className="btn-text xsmall flex items-center gap-xs mb-sm"
-                                    onClick={() => setShowOtherAsas(!showOtherAsas)}
-                                >
-                                    <span>{showOtherAsas ? '▼' : '▶'}</span>
-                                    <span>Other Filtered Assets ({Object.keys(stats.excludedASAMapping).length})</span>
-                                </button>
-
-                                {showOtherAsas && (
-                                    <div className="flex flex-wrap gap-xs p-sm bg-surface-light rounded">
-                                        {Object.entries(stats.excludedASAMapping)
-                                            .filter(([id]) => !Object.values(KNOWN_ASSETS).includes(parseInt(id)))
-                                            .sort(([, a], [, b]) => b.count - a.count)
-                                            .map(([id, info]) => (
-                                                <div key={id} className="chip flex items-center gap-xs">
-                                                    <span className="xsmall font-bold">{info.name || id}</span>
-                                                    <span className="xsmall opacity-60">({info.count})</span>
-                                                    <button
-                                                        className="btn-icon-sm"
-                                                        title="Include this asset"
-                                                        onClick={() => {
-                                                            const assetId = id === 'ALGO' ? 'ALGO' : parseInt(id)
-                                                            setOptions((prev: KoinlyExportOptions) => ({
-                                                                ...prev,
-                                                                whitelistedAssetIds: [...prev.whitelistedAssetIds, assetId]
-                                                            }))
-                                                        }}
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Whitelisted ASAs List */}
-                    {options.whitelistedAssetIds.length > 0 && (
-                        <div className="mt-md pt-md border-top">
-                            <h4 className="h5 mb-sm">Whitelisted Assets</h4>
-                            <div className="flex flex-wrap gap-xs">
-                                {options.whitelistedAssetIds.map(id => {
-                                    const name = assetNames[id] || id
-                                    return (
-                                        <div key={id} className="chip chip-accent flex items-center gap-xs" style={{ padding: '2px 8px' }}>
-                                            <span className="xsmall font-bold">{name}</span>
-                                            <button
-                                                className="btn-icon-sm"
-                                                title={`Remove ${name} (${id}) from whitelist`}
-                                                onClick={() => {
-                                                    setOptions((prev: KoinlyExportOptions) => ({
-                                                        ...prev,
-                                                        whitelistedAssetIds: prev.whitelistedAssetIds.filter(w => w !== id)
-                                                    }))
-                                                }}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                </div>
-
             </div>
+
 
             {/* Preview Table */}
             <div className="table-container">
