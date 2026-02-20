@@ -131,7 +131,7 @@ export default function KoinlyExport() {
         })
 
         return filtered
-    }, [processedRows, searchQuery, sortField, sortDirection])
+    }, [processedRows, searchQuery, sortField, sortDirection, walletFilter, ownAddressesSet])
 
     const totalPages = Math.ceil(displayRows.length / pageSize)
     const paginatedRows = displayRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
