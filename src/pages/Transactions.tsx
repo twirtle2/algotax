@@ -174,8 +174,8 @@ export default function Transactions() {
                         >
                             <option value="all">All Sources</option>
                             <option value="algorand">Algorand</option>
-                            <option value="coinbase">Coinbase</option>
                         </select>
+
 
                         <select
                             className="select"
@@ -223,7 +223,9 @@ export default function Transactions() {
                                     <th>To</th>
                                     <th style={{ textAlign: 'right' }}>{currency} Value</th>
                                     <th>Notes</th>
+                                    <th>Hash</th>
                                     <th>Classify</th>
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -240,9 +242,10 @@ export default function Transactions() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`badge ${tx.source === 'algorand' ? 'badge-accent' : 'badge-info'}`}>
+                                                <span className={`badge badge-accent`}>
                                                     {tx.source}
                                                 </span>
+
                                             </td>
                                             <td style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>
                                                 {tx.assetName}
@@ -264,7 +267,18 @@ export default function Transactions() {
                                             <td style={{ fontSize: '0.75rem', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {tx.notes ?? '—'}
                                             </td>
+                                            <td className="text-mono xsmall" title={tx.txHash}>
+                                                <a
+                                                    href={`https://allo.info/tx/${tx.txHash}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-accent hover:underline"
+                                                >
+                                                    {tx.txHash.slice(0, 8)}...
+                                                </a>
+                                            </td>
                                             <td>
+
                                                 <select
                                                     className="select"
                                                     value={classification}

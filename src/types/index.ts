@@ -19,7 +19,7 @@ export type TxClassification =
     | 'income_other'
     | 'unknown'
 
-export type TxSource = 'algorand' | 'coinbase'
+export type TxSource = 'algorand'
 export type AssetIdentifier = number | 'ALGO'
 export type CostBasisMethod = 'FIFO' | 'LIFO'
 export type Region = 'AU' | 'US' | 'GB' | 'CA' | 'EU'

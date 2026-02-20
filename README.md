@@ -13,7 +13,7 @@ Koinly pricing is tiered based on your transaction count. For active users on fa
 4. **Generating Tax-Ready CSVs**: Exporting a clean Universal Koinly CSV format that minimizes your total transaction count while keeping your capital gains calculations perfectly accurate.
 
 ## Features
-- **Wallet and Date Filtering**: Filter by specific wallets or Australian Financial Years (e.g., FY 2023-24).
+- **Wallet and Date Filtering**: Filter by specific wallets or Financial Years based on your selected tax region (supports AU, UK, US, CA, EU).
 - **Transaction Previews**: See exactly how many transactions you are saving before exporting. Includes direct links to Allo.info for transaction verification.
 - **Local First**: Your data stays local. The app communicates directly with Algorand nodes (Powered by Nodely) and doesn't store your wallet addresses or transaction history on any external servers.
 

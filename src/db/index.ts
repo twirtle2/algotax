@@ -39,9 +39,10 @@ export async function getTransactionsForFY(
 }
 
 /** Get all transactions from a specific source */
-export async function getTransactionsBySource(source: 'algorand' | 'coinbase'): Promise<UnifiedTransaction[]> {
+export async function getTransactionsBySource(source: 'algorand'): Promise<UnifiedTransaction[]> {
     return db.transactions.where('source').equals(source).sortBy('timestamp')
 }
+
 
 /** Clear all data (for reset) */
 export async function clearAllData(): Promise<void> {

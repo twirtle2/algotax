@@ -321,9 +321,10 @@ async function classifyInnerTransactions(
             const amount = (inner['payment-transaction']?.amount ?? 0) / 1_000_000
             const receiver = inner['payment-transaction']?.receiver ?? ''
             classified = createUnified(
-                { ...inner, id: `${parentTx.id}-inner-${i}`, 'round-time': parentTx['round-time'], group: parentTx.group },
+                { ...inner, id: `${parentTx.id}/inner/${i + 1}`, 'round-time': parentTx['round-time'], group: parentTx.group },
                 'unknown', 'ALGO', 'ALGO', amount, receiver, inner.sender
             )
+
         } else if (inner['tx-type'] === 'axfer') {
             const axfer = inner['asset-transfer-transaction']
             if (!axfer) continue
@@ -332,9 +333,10 @@ async function classifyInnerTransactions(
             const decimals = await resolveAssetDecimals(assetId)
             const amount = toStandardUnits(axfer.amount, decimals)
             classified = createUnified(
-                { ...inner, id: `${parentTx.id}-inner-${i}`, 'round-time': parentTx['round-time'], group: parentTx.group },
+                { ...inner, id: `${parentTx.id}/inner/${i + 1}`, 'round-time': parentTx['round-time'], group: parentTx.group },
                 'unknown', assetId, assetName, amount, axfer.receiver, inner.sender
             )
+
         } else {
             continue
         }
