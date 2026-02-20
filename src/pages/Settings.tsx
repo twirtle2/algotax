@@ -38,19 +38,23 @@ export default function Settings() {
     }
 
     // ─── Sync Wallet Transactions ─────────────────────────────────
-    const syncWallet = useCallback(async (address: string) => {
+    const syncWallet = useCallback(async (address: string, forceFull = false) => {
         setSyncProgress((p) => ({ ...p, [address]: 'Pre-caching assets...' }))
 
         try {
-            // Delta Sync: Find latest transaction for this address
-            const latestFrom = await db.transactions.where('fromAddress').equals(address).reverse().first()
-            const latestTo = await db.transactions.where('toAddress').equals(address).reverse().first()
-            const maxTimestamp = Math.max(latestFrom?.timestamp ?? 0, latestTo?.timestamp ?? 0)
+            let afterTime: string | undefined = undefined
 
-            // Overlap by 24h to catch any late-settling or group-linked transactions
-            const afterTime = maxTimestamp > 0
-                ? new Date((maxTimestamp - 86400) * 1000).toISOString()
-                : undefined
+            if (!forceFull) {
+                // Delta Sync: Find latest transaction for this address
+                const latestFrom = await db.transactions.where('fromAddress').equals(address).reverse().first()
+                const latestTo = await db.transactions.where('toAddress').equals(address).reverse().first()
+                const maxTimestamp = Math.max(latestFrom?.timestamp ?? 0, latestTo?.timestamp ?? 0)
+
+                // Overlap by 24h to catch any late-settling or group-linked transactions
+                if (maxTimestamp > 0) {
+                    afterTime = new Date((maxTimestamp - 86400) * 1000).toISOString()
+                }
+            }
 
             setSyncProgress((p) => ({
                 ...p,
@@ -78,7 +82,7 @@ export default function Settings() {
 
             setSyncProgress((p) => ({
                 ...p,
-                [address]: `✅ Synced ${classified.length} transactions`,
+                [address]: `✅ ${forceFull ? 'Full Re-sync' : 'Synced'} ${classified.length} transactions`,
             }))
         } catch (err) {
             setSyncProgress((p) => ({
@@ -89,10 +93,10 @@ export default function Settings() {
     }, [wallets])
 
     // ─── Sync All Wallets ─────────────────────────────────────────
-    const syncAllWallets = async () => {
+    const syncAllWallets = async (forceFull = false) => {
         setSyncing(true)
         for (const wallet of wallets) {
-            await syncWallet(wallet.address)
+            await syncWallet(wallet.address, forceFull)
         }
         setSyncing(false)
     }
@@ -250,10 +254,10 @@ export default function Settings() {
                                 ))}
                             </div>
 
-                            <div className="mt-md">
+                            <div className="mt-md flex gap-sm">
                                 <button
                                     className="btn btn-primary"
-                                    onClick={syncAllWallets}
+                                    onClick={() => syncAllWallets(false)}
                                     disabled={syncing}
                                 >
                                     {syncing ? (
@@ -263,6 +267,25 @@ export default function Settings() {
                                         </>
                                     ) : (
                                         '🔄 Sync All Wallets'
+                                    )}
+                                </button>
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        if (confirm('A Full Re-sync will fetch all transactions from the beginning of time. This may take a while. Proceed?')) {
+                                            syncAllWallets(true)
+                                        }
+                                    }}
+                                    disabled={syncing}
+                                    title="Fetch all transactions from the beginning to ensure nothing is missed"
+                                >
+                                    {syncing ? (
+                                        <>
+                                            <div className="loading-spinner" />
+                                            Re-syncing...
+                                        </>
+                                    ) : (
+                                        '🔄⚡ Re-sync All (Full)'
                                     )}
                                 </button>
                             </div>
