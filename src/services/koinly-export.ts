@@ -189,17 +189,26 @@ function mapToKoinlyLabel(classification: TxClassification): string {
  */
 export function toKoinlyCSV(processedRows: any[]): string {
     const headers = [
-        'Koinly Date',
+        'Date',
         'Sent Amount',
         'Sent Currency',
         'Received Amount',
         'Received Currency',
         'Fee Amount',
         'Fee Currency',
+        'Net Worth Amount',
+        'Net Worth Currency',
         'Label',
         'Description',
         'TxHash'
     ]
+
+    const escapeCSV = (value: string): string => {
+        if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+            return `"${value.replace(/"/g, '""')}"`
+        }
+        return value
+    }
 
     const rows = processedRows.map(row => {
         // Common fields
@@ -218,6 +227,8 @@ export function toKoinlyCSV(processedRows: any[]): string {
                 row.receivedCurrency,
                 row.feeAmount.toFixed(8),
                 row.feeCurrency,
+                '',
+                '',
                 label,
                 description,
                 txHash
@@ -253,6 +264,8 @@ export function toKoinlyCSV(processedRows: any[]): string {
             receivedCurrency,
             feeAmount,
             feeCurrency,
+            '',
+            '',
             label,
             description,
             txHash
@@ -261,6 +274,6 @@ export function toKoinlyCSV(processedRows: any[]): string {
 
     return [
         headers.join(','),
-        ...rows.map(r => r.join(','))
+        ...rows.map(r => r.map(v => escapeCSV(String(v ?? ''))).join(','))
     ].join('\n')
 }
