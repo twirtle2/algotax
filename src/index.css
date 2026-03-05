@@ -824,6 +824,29 @@ tr:last-child td {
   color: var(--color-accent);
 }
 
+.btn-coffee {
+  background: linear-gradient(180deg, #21354a, #1a2a3a);
+  border: 1px solid rgba(0, 212, 170, 0.28);
+  color: #dffaf4;
+  font-weight: 600;
+}
+
+.btn-coffee:hover {
+  border-color: rgba(0, 212, 170, 0.55);
+  background: linear-gradient(180deg, #264058, #1e3245);
+  transform: translateY(-1px);
+}
+
+.btn-coffee:active {
+  transform: translateY(0);
+}
+
+.coffee-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.92;
+}
+
 .w-full {
   width: 100%;
 }
@@ -925,4 +948,191 @@ input:checked+.toggle-slider:before {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+}
+
+/* Donation Modal */
+.coffee-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 20, 0.76);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: var(--space-md);
+  z-index: 200;
+}
+
+.coffee-modal {
+  width: min(460px, 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-hover);
+  background: linear-gradient(180deg, rgba(20, 29, 43, 0.98), rgba(17, 24, 34, 0.98));
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.coffee-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.coffee-modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.coffee-modal-header p {
+  margin-top: var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.coffee-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coffee-modal-close:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-hover);
+}
+
+.coffee-modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.coffee-modal-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.coffee-modal-qr-skeleton {
+  width: 240px;
+  height: 240px;
+  align-self: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--color-bg-tertiary), var(--color-bg-hover), var(--color-bg-tertiary));
+  background-size: 200% 100%;
+  animation: pulse-slide 1.6s linear infinite;
+}
+
+.coffee-modal-line-skeleton {
+  width: 100%;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-bg-tertiary), var(--color-bg-hover), var(--color-bg-tertiary));
+  background-size: 200% 100%;
+  animation: pulse-slide 1.6s linear infinite;
+}
+
+.coffee-modal-line-skeleton.short {
+  width: 65%;
+}
+
+@keyframes pulse-slide {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+.coffee-modal-error {
+  border: 1px solid rgba(255, 92, 92, 0.25);
+  background: rgba(255, 92, 92, 0.08);
+  color: #ff9f9f;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  font-size: 0.82rem;
+}
+
+.coffee-modal-qr-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-sm);
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  margin-top: var(--space-xs);
+}
+
+.coffee-modal-qr {
+  width: 240px;
+  height: 240px;
+  max-width: 100%;
+}
+
+.coffee-modal-details {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.coffee-modal-value {
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.coffee-modal-subvalue {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.coffee-modal-cache {
+  border: 1px solid rgba(255, 184, 77, 0.2);
+  background: rgba(255, 184, 77, 0.08);
+  color: var(--color-warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  font-size: 0.75rem;
+}
+
+.coffee-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .coffee-modal {
+    padding: var(--space-md);
+  }
+
+  .coffee-modal-qr-skeleton,
+  .coffee-modal-qr {
+    width: 210px;
+    height: 210px;
+  }
+
+  .coffee-modal-actions {
+    flex-direction: column;
+  }
+
+  .coffee-modal-actions .btn {
+    width: 100%;
+  }
 }

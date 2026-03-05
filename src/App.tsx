@@ -1,14 +1,17 @@
+import { useState } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import Transactions from '@/pages/Transactions'
 import KoinlyExport from '@/pages/KoinlyExport'
 import Settings from '@/pages/Settings'
+import DonationModal from '@/components/DonationModal'
 
 const FINANCIAL_YEARS = ['2023-24', '2024-25', '2025-26', '2026-27']
 
 export default function App() {
     const financialYear = useAppStore((s) => s.financialYear)
     const setFinancialYear = useAppStore((s) => s.setFinancialYear)
+    const [isDonationOpen, setIsDonationOpen] = useState(false)
 
     return (
         <div className="app-layout">
@@ -58,6 +61,18 @@ export default function App() {
                         </svg>
                         View on GitHub
                     </a>
+                    <button
+                        type="button"
+                        className="btn btn-coffee w-full mb-md"
+                        onClick={() => setIsDonationOpen(true)}
+                    >
+                        <svg className="coffee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h13v7a4 4 0 01-4 4H7a4 4 0 01-4-4V8z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 10h2a2.5 2.5 0 010 5h-2" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 4c.7.7.7 1.8 0 2.5M10 3.5c.9.9.9 2.3 0 3.2" />
+                        </svg>
+                        Buy me a coffee
+                    </button>
                     <div className="sidebar-footer">
                         <a
                             href="http://nodely.io/"
@@ -79,6 +94,7 @@ export default function App() {
                     <Route path="/settings" element={<Settings />} />
                 </Routes>
             </main>
+            <DonationModal open={isDonationOpen} onClose={() => setIsDonationOpen(false)} />
         </div>
     )
 }
