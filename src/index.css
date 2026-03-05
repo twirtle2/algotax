@@ -1087,6 +1087,23 @@ input:checked+.toggle-slider:before {
   gap: var(--space-sm);
 }
 
+.coffee-modal-amount-row {
+  margin-top: 6px;
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.coffee-modal-amount-input {
+  flex: 1;
+}
+
+.coffee-modal-input-error {
+  margin-top: 4px;
+  color: var(--color-loss);
+  font-size: 0.72rem;
+}
+
 .coffee-modal-value {
   color: var(--color-text-primary);
   font-size: 0.9rem;
@@ -1130,6 +1147,15 @@ input:checked+.toggle-slider:before {
 
   .coffee-modal-actions {
     flex-direction: column;
+  }
+
+  .coffee-modal-amount-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .coffee-modal-amount-row .btn {
+    width: 100%;
   }
 
   .coffee-modal-actions .btn {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as QRCode from 'qrcode'
-import { getDonationQuote, type DonationQuote } from '@/services/donation'
+import { DEFAULT_DONATION_AUD, getDonationQuote, type DonationQuote } from '@/services/donation'
 
 interface DonationModalProps {
     open: boolean
@@ -15,14 +15,23 @@ export default function DonationModal({ open, onClose }: DonationModalProps) {
     const [qrDataUrl, setQrDataUrl] = useState<string>('')
     const [errorMessage, setErrorMessage] = useState<string>('')
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+    const [audAmountInput, setAudAmountInput] = useState<string>(String(DEFAULT_DONATION_AUD))
 
-    const loadQuote = useCallback(async () => {
+    const parsedAudAmount = useMemo(() => {
+        const value = Number(audAmountInput)
+        if (!Number.isFinite(value) || value <= 0) {
+            return null
+        }
+        return value
+    }, [audAmountInput])
+
+    const loadQuote = useCallback(async (audAmount: number) => {
         setState('loading')
         setErrorMessage('')
         setCopyState('idle')
 
         try {
-            const nextQuote = await getDonationQuote()
+            const nextQuote = await getDonationQuote(audAmount)
             const qrUrl = await QRCode.toDataURL(nextQuote.algorandUri, {
                 width: 320,
                 margin: 2,
@@ -44,7 +53,8 @@ export default function DonationModal({ open, onClose }: DonationModalProps) {
 
     useEffect(() => {
         if (!open) return
-        void loadQuote()
+        setAudAmountInput(String(DEFAULT_DONATION_AUD))
+        void loadQuote(DEFAULT_DONATION_AUD)
     }, [open, loadQuote])
 
     useEffect(() => {
@@ -112,7 +122,7 @@ export default function DonationModal({ open, onClose }: DonationModalProps) {
                 <header className="coffee-modal-header">
                     <div>
                         <h3 id="coffee-modal-title">Buy me a coffee</h3>
-                        <p>Scan in Pera Wallet to send A${quote?.audAmount.toFixed(2) ?? '5.00'} in ALGO.</p>
+                        <p>Scan in Pera Wallet to send A${quote?.audAmount.toFixed(2) ?? DEFAULT_DONATION_AUD.toFixed(2)} in ALGO.</p>
                     </div>
                     <button
                         type="button"
@@ -137,7 +147,11 @@ export default function DonationModal({ open, onClose }: DonationModalProps) {
                 {state === 'error' && (
                     <div className="coffee-modal-error" aria-live="polite">
                         <p>{errorMessage}</p>
-                        <button type="button" className="btn btn-secondary" onClick={() => void loadQuote()}>
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => void loadQuote(parsedAudAmount ?? DEFAULT_DONATION_AUD)}
+                        >
                             Retry
                         </button>
                     </div>
@@ -150,6 +164,34 @@ export default function DonationModal({ open, onClose }: DonationModalProps) {
                         </div>
 
                         <div className="coffee-modal-details">
+                            <div>
+                                <label htmlFor="coffee-aud-amount" className="label">Donation amount (AUD)</label>
+                                <div className="coffee-modal-amount-row">
+                                    <input
+                                        id="coffee-aud-amount"
+                                        type="number"
+                                        min="0.01"
+                                        step="0.01"
+                                        className="input coffee-modal-amount-input"
+                                        value={audAmountInput}
+                                        onChange={(event) => setAudAmountInput(event.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        disabled={!parsedAudAmount}
+                                        onClick={() => {
+                                            if (!parsedAudAmount) return
+                                            void loadQuote(parsedAudAmount)
+                                        }}
+                                    >
+                                        Update QR
+                                    </button>
+                                </div>
+                                {!parsedAudAmount && (
+                                    <p className="coffee-modal-input-error">Enter an amount greater than 0.</p>
+                                )}
+                            </div>
                             <div>
                                 <span className="label">Recipient</span>
                                 <p className="coffee-modal-value">{quote.recipientName}</p>

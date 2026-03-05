@@ -47,8 +47,20 @@ describe('donation service', () => {
         const fresh = await getDonationQuote()
         expect(fresh.isCached).toBeUndefined()
 
-        const cached = await getDonationQuote()
+        const cached = await getDonationQuote(10)
         expect(cached.isCached).toBe(true)
+        expect(cached.audAmount).toBe(10)
+        expect(cached.microAlgos).toBe(80_000_000)
+    })
+
+    it('builds quote using custom AUD amount', async () => {
+        vi.stubGlobal('fetch', vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ owner: 'SZS55FKNGERPTHGHPC3OP6EDVA5LCI5KOP7J2CKAYXGMCXBWV4TUPDLQIA' }), { status: 200 }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ algorand: { aud: 0.125 } }), { status: 200 })))
+
+        const quote = await getDonationQuote(7.5)
+        expect(quote.audAmount).toBe(7.5)
+        expect(quote.microAlgos).toBe(60_000_000)
     })
 
     it('fetches ALGO/AUD rate from expected payload', async () => {

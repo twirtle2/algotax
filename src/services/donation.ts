@@ -59,6 +59,30 @@ export function calcMicroAlgosFromAud(audAmount: number, algoAudRate: number): n
     return Math.max(1, Math.round((audAmount / algoAudRate) * MICRO_ALGOS_PER_ALGO))
 }
 
+function createDonationQuote(
+    recipientAddress: string,
+    algoAudRate: number,
+    audAmount: number,
+    isCached?: boolean,
+): DonationQuote {
+    const microAlgos = calcMicroAlgosFromAud(audAmount, algoAudRate)
+    const algoAmount = microAlgos / MICRO_ALGOS_PER_ALGO
+
+    return {
+        recipientName: DEFAULT_NFD_NAME,
+        recipientAddress,
+        audAmount,
+        algoAudRate,
+        algoAmount,
+        microAlgos,
+        note: DEFAULT_DONATION_NOTE,
+        algorandUri: buildAlgorandPaymentUri(recipientAddress, microAlgos, DEFAULT_DONATION_NOTE),
+        peraUri: buildPeraPaymentUri(recipientAddress, microAlgos, DEFAULT_DONATION_NOTE),
+        generatedAt: Date.now(),
+        isCached,
+    }
+}
+
 export function buildAlgorandPaymentUri(address: string, microAlgos: number, note: string): string {
     const query = `amount=${microAlgos}&xnote=${encodeNoteForWallet(note)}`
 
@@ -107,38 +131,29 @@ function hasFreshCache(cache: DonationCacheEntry | null): cache is DonationCache
     return !!cache && Date.now() - cache.savedAt <= DONATION_CACHE_TTL_MS
 }
 
-export async function getDonationQuote(): Promise<DonationQuote> {
+export async function getDonationQuote(audAmount = DEFAULT_DONATION_AUD): Promise<DonationQuote> {
+    if (!Number.isFinite(audAmount) || audAmount <= 0) {
+        throw new Error('AUD amount must be greater than zero')
+    }
+
     try {
         const [recipientAddress, algoAudRate] = await Promise.all([
             resolveNfdRecipient(DEFAULT_NFD_NAME),
             fetchAlgoAudRate(),
         ])
 
-        const microAlgos = calcMicroAlgosFromAud(DEFAULT_DONATION_AUD, algoAudRate)
-        const algoAmount = microAlgos / MICRO_ALGOS_PER_ALGO
-
-        const quote: DonationQuote = {
-            recipientName: DEFAULT_NFD_NAME,
-            recipientAddress,
-            audAmount: DEFAULT_DONATION_AUD,
-            algoAudRate,
-            algoAmount,
-            microAlgos,
-            note: DEFAULT_DONATION_NOTE,
-            algorandUri: buildAlgorandPaymentUri(recipientAddress, microAlgos, DEFAULT_DONATION_NOTE),
-            peraUri: buildPeraPaymentUri(recipientAddress, microAlgos, DEFAULT_DONATION_NOTE),
-            generatedAt: Date.now(),
-        }
+        const quote = createDonationQuote(recipientAddress, algoAudRate, audAmount)
 
         donationQuoteCache = { quote, savedAt: Date.now() }
         return quote
     } catch (error) {
         if (hasFreshCache(donationQuoteCache)) {
-            return {
-                ...donationQuoteCache.quote,
-                generatedAt: Date.now(),
-                isCached: true,
-            }
+            return createDonationQuote(
+                donationQuoteCache.quote.recipientAddress,
+                donationQuoteCache.quote.algoAudRate,
+                audAmount,
+                true,
+            )
         }
 
         if (error instanceof Error) {
