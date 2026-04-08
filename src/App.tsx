@@ -20,14 +20,14 @@ export default function App() {
                 <div className="sidebar-logo">
                     <div>
                         <h1>AlgoTax</h1>
-                        <span>Koinly Export Helper</span>
+                        <span>Tax Export Helper</span>
                     </div>
                 </div>
 
                 <nav className="sidebar-nav">
                     <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>
                         <span className="nav-icon">📤</span>
-                        Koinly Export
+                        Export
                     </NavLink>
                     <NavLink to="/transactions" className={({ isActive }) => isActive ? 'active' : ''}>
                         <span className="nav-icon">📋</span>
