@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { db } from '@/db'
 import { useAppStore } from '@/store/appStore'
-import { filterForKoinly, mergeSwapPairs, toKoinlyCSV } from '@/services/koinly-export'
+import ExportModal from '@/components/ExportModal'
+import { exportCoinTracker, filterForKoinly, mergeSwapPairs, toKoinlyCSV, type ProcessedExportRow } from '@/services/koinly-export'
 import { getFYBoundaries } from '@/utils/date-utils'
 import { KNOWN_ASSETS, ASSET_ID_TO_NAME } from '@/services/defi-app-ids'
 import type { UnifiedTransaction, KoinlyExportOptions } from '@/types'
@@ -24,6 +25,10 @@ export default function KoinlyExport() {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(50)
     const [walletFilter, setWalletFilter] = useState<string>('all')
+    const [showExportModal, setShowExportModal] = useState(false)
+
+    const isMergedRow = (row: ProcessedExportRow): row is Extract<ProcessedExportRow, { sentAmount: number }> => 'sentAmount' in row
+    const isUnifiedTransaction = (row: ProcessedExportRow): row is UnifiedTransaction => 'assetName' in row
 
     useEffect(() => {
         async function load() {
@@ -84,15 +89,15 @@ export default function KoinlyExport() {
         if (walletFilter !== 'all') {
             const normalizedFilter = walletFilter.toUpperCase()
             filtered = filtered.filter(row => {
-                if ('walletAddress' in row) return row.walletAddress?.toUpperCase() === normalizedFilter
+                if (isMergedRow(row)) return row.walletAddress?.toUpperCase() === normalizedFilter
 
                 // For regular transactions, find which of from/to is tracked
                 const fromOwn = row.fromAddress && ownAddressesSet.has(row.fromAddress.toUpperCase())
                 const toOwn = row.toAddress && ownAddressesSet.has(row.toAddress.toUpperCase())
 
                 // If filtering by a specific wallet, ensure this transaction belongs to it
-                if (fromOwn && row.fromAddress.toUpperCase() === normalizedFilter) return true
-                if (toOwn && row.toAddress.toUpperCase() === normalizedFilter) return true
+                if (fromOwn && row.fromAddress?.toUpperCase() === normalizedFilter) return true
+                if (toOwn && row.toAddress?.toUpperCase() === normalizedFilter) return true
                 return false
             })
         }
@@ -101,9 +106,9 @@ export default function KoinlyExport() {
         if (searchQuery) {
             const q = searchQuery.toLowerCase()
             filtered = filtered.filter(row => {
-                const asset = 'assetName' in row ? row.assetName : (row.sentCurrency || row.receivedCurrency)
-                const notes = row.notes || row.description || ''
-                const type = row.manualClassification || row.classification || 'Trade'
+                const asset = isUnifiedTransaction(row) ? row.assetName : (row.sentCurrency || row.receivedCurrency)
+                const notes = isUnifiedTransaction(row) ? (row.notes || '') : row.description
+                const type = isUnifiedTransaction(row) ? (row.manualClassification || row.classification || 'Trade') : 'Trade'
                 return (
                     asset?.toLowerCase().includes(q) ||
                     notes?.toLowerCase().includes(q) ||
@@ -121,11 +126,11 @@ export default function KoinlyExport() {
                 valA = a.timestamp
                 valB = b.timestamp
             } else if (sortField === 'amount') {
-                valA = 'amount' in a ? a.amount : (a.sentAmount || a.receivedAmount)
-                valB = 'amount' in b ? b.amount : (b.sentAmount || b.receivedAmount)
+                valA = isUnifiedTransaction(a) ? a.amount : (a.sentAmount || a.receivedAmount)
+                valB = isUnifiedTransaction(b) ? b.amount : (b.sentAmount || b.receivedAmount)
             } else if (sortField === 'classification') {
-                valA = a.manualClassification || a.classification || 'Trade'
-                valB = b.manualClassification || b.classification || 'Trade'
+                valA = isUnifiedTransaction(a) ? (a.manualClassification || a.classification || 'Trade') : 'Trade'
+                valB = isUnifiedTransaction(b) ? (b.manualClassification || b.classification || 'Trade') : 'Trade'
             }
 
             if (valA < valB) return sortDirection === 'asc' ? -1 : 1
@@ -149,18 +154,30 @@ export default function KoinlyExport() {
         setCurrentPage(1)
     }
 
-    const handleDownload = () => {
-        const csv = toKoinlyCSV(processedRows)
+    const triggerCSVDownload = (csv: string, filename: string) => {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `koinly_export_${region}_${financialYear}_${Date.now()}.csv`)
+        link.setAttribute('download', filename)
 
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+    }
+
+    const handleSelectFormat = (format: 'koinly' | 'cointracker') => {
+        if (format === 'koinly') {
+            const csv = toKoinlyCSV(processedRows)
+            triggerCSVDownload(csv, `koinly_export_${region}_${financialYear}_${Date.now()}.csv`)
+        } else {
+            const csv = exportCoinTracker(filteredTxns)
+            triggerCSVDownload(csv, 'cointracker-export.csv')
+        }
+
+        setShowExportModal(false)
     }
 
     if (loading) {
@@ -478,12 +495,18 @@ export default function KoinlyExport() {
                             </div>
                         </div>
 
-                        <button className="btn btn-primary mt-xl py-md w-full" onClick={handleDownload} style={{ borderRadius: 'var(--radius-md)', fontWeight: '700' }}>
-                            <span>📥</span> Download Koinly CSV
+                        <button className="btn btn-primary mt-xl py-md w-full" onClick={() => setShowExportModal(true)} style={{ borderRadius: 'var(--radius-md)', fontWeight: '700' }}>
+                            <span>📥</span> Export
                         </button>
                     </div>
                 </div>
             </div>
+
+            <ExportModal
+                isOpen={showExportModal}
+                onClose={() => setShowExportModal(false)}
+                onSelectFormat={handleSelectFormat}
+            />
 
 
             {/* Preview Table */}

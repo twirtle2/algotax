@@ -15,6 +15,39 @@ export interface KoinlyExportStats {
     excludedASAMapping: Record<string, { name: string; count: number }>
 }
 
+export interface MergedSwapRow {
+    timestamp: number
+    sentAmount: number
+    sentCurrency: string
+    receivedAmount: number
+    receivedCurrency: string
+    feeAmount: number
+    feeCurrency: string
+    txHash: string
+    walletAddress?: string
+    description: string
+    label: string
+}
+
+export type ProcessedExportRow = UnifiedTransaction | MergedSwapRow
+
+interface CoinTrackerRow {
+    sortTimestamp: number
+    date: string
+    receivedQuantity: string
+    receivedCurrency: string
+    sentQuantity: string
+    sentCurrency: string
+    feeAmount: string
+    feeCurrency: string
+    tag: string
+    transactionId: string
+}
+
+function isMergedSwapRow(row: ProcessedExportRow): row is MergedSwapRow {
+    return 'sentAmount' in row
+}
+
 /**
  * Filter transactions for Koinly export and collect stats
  */
@@ -109,8 +142,8 @@ export function filterForKoinly(
 /**
  * Merge swap pairs (sent/received) into single Koinly rows
  */
-export function mergeSwapPairs(txns: UnifiedTransaction[], ownAddresses: string[]): { merged: any[]; count: number } {
-    const result: any[] = []
+export function mergeSwapPairs(txns: UnifiedTransaction[], ownAddresses: string[]): { merged: ProcessedExportRow[]; count: number } {
+    const result: ProcessedExportRow[] = []
     const groups = new Map<string, UnifiedTransaction[]>()
     let mergedCount = 0
 
@@ -187,7 +220,7 @@ function mapToKoinlyLabel(classification: TxClassification): string {
 /**
  * Generate CSV string in Koinly Universal format
  */
-export function toKoinlyCSV(processedRows: any[]): string {
+export function toKoinlyCSV(processedRows: ProcessedExportRow[]): string {
     const headers = [
         'Date',
         'Sent Amount',
@@ -214,11 +247,11 @@ export function toKoinlyCSV(processedRows: any[]): string {
         // Common fields
         const date = new Date(row.timestamp * 1000).toISOString().replace('T', ' ').replace(/\.\d+Z$/, '')
         const txHash = row.txHash ?? ''
-        const description = row.description ?? row.notes ?? ''
-        const label = row.label ?? (row.classification ? mapToKoinlyLabel(row.classification) : '')
+        const description = isMergedSwapRow(row) ? row.description : (row.notes ?? '')
+        const label = isMergedSwapRow(row) ? row.label : (row.classification ? mapToKoinlyLabel(row.classification) : '')
 
         // If it's a merged swap row
-        if ('sentAmount' in row) {
+        if (isMergedSwapRow(row)) {
             return [
                 date,
                 row.sentAmount.toFixed(8),
@@ -275,5 +308,144 @@ export function toKoinlyCSV(processedRows: any[]): string {
     return [
         headers.join(','),
         ...rows.map(r => r.map(v => escapeCSV(String(v ?? ''))).join(','))
+    ].join('\n')
+}
+
+function escapeCSV(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+        return `"${value.replace(/"/g, '""')}"`
+    }
+    return value
+}
+
+function formatCoinTrackerDate(timestamp: number): string {
+    const date = new Date(timestamp * 1000)
+    const pad = (value: number) => String(value).padStart(2, '0')
+
+    return [
+        pad(date.getUTCMonth() + 1),
+        pad(date.getUTCDate()),
+        date.getUTCFullYear(),
+    ].join('/') + ` ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`
+}
+
+function formatQuantity(value: number): string {
+    return Number.isFinite(value) ? String(value) : ''
+}
+
+function buildCoinTrackerRow(row: CoinTrackerRow): string {
+    return [
+        row.date,
+        row.receivedQuantity,
+        row.receivedCurrency,
+        row.sentQuantity,
+        row.sentCurrency,
+        row.feeAmount,
+        row.feeCurrency,
+        row.tag,
+        row.transactionId,
+    ].map(value => escapeCSV(value)).join(',')
+}
+
+function mapSingleTransactionToCoinTrackerRow(tx: UnifiedTransaction): CoinTrackerRow {
+    const classification = tx.manualClassification ?? tx.classification
+    const isOut = ['sell', 'transfer_out', 'nft_sale', 'lp_add'].includes(classification)
+    const isIn = ['buy', 'transfer_in', 'nft_purchase', 'nft_mint', 'staking_reward', 'governance_reward', 'airdrop', 'income_other', 'lp_remove'].includes(classification)
+
+    return {
+        sortTimestamp: tx.timestamp,
+        date: formatCoinTrackerDate(tx.timestamp),
+        receivedQuantity: isIn ? formatQuantity(tx.amount) : '',
+        receivedCurrency: isIn ? tx.assetName : '',
+        sentQuantity: isOut ? formatQuantity(tx.amount) : '',
+        sentCurrency: isOut ? tx.assetName : '',
+        feeAmount: tx.feeAlgo > 0 ? formatQuantity(tx.feeAlgo) : '',
+        feeCurrency: tx.feeAlgo > 0 ? 'ALGO' : '',
+        tag: '',
+        transactionId: tx.txHash ?? '',
+    }
+}
+
+function buildCoinTrackerRowsForSwapGroup(group: UnifiedTransaction[]): CoinTrackerRow[] {
+    const sentLegs = group.filter(tx => tx.notes?.includes('(sent)'))
+    const receivedLegs = group.filter(tx => tx.notes?.includes('(received)'))
+
+    if (sentLegs.length === 0 || receivedLegs.length === 0) {
+        return group.map(mapSingleTransactionToCoinTrackerRow)
+    }
+
+    const referenceTx = sentLegs[0] ?? receivedLegs[0]
+    if (!referenceTx) {
+        return group.map(mapSingleTransactionToCoinTrackerRow)
+    }
+    const rows: CoinTrackerRow[] = receivedLegs.map(tx => ({
+        sortTimestamp: tx.timestamp,
+        date: formatCoinTrackerDate(tx.timestamp),
+        receivedQuantity: formatQuantity(tx.amount),
+        receivedCurrency: tx.assetName,
+        sentQuantity: '',
+        sentCurrency: '',
+        feeAmount: '',
+        feeCurrency: '',
+        tag: '',
+        transactionId: tx.txHash ?? referenceTx.txHash ?? '',
+    }))
+
+    sentLegs.forEach((tx, index) => {
+        rows.push({
+            sortTimestamp: tx.timestamp,
+            date: formatCoinTrackerDate(tx.timestamp),
+            receivedQuantity: '',
+            receivedCurrency: '',
+            sentQuantity: formatQuantity(tx.amount),
+            sentCurrency: tx.assetName,
+            feeAmount: index === 0 && tx.feeAlgo > 0 ? formatQuantity(tx.feeAlgo) : '',
+            feeCurrency: index === 0 && tx.feeAlgo > 0 ? 'ALGO' : '',
+            tag: '',
+            transactionId: tx.txHash ?? referenceTx.txHash ?? '',
+        })
+    })
+
+    return rows
+}
+
+export function exportCoinTracker(transactions: UnifiedTransaction[]): string {
+    const headers = [
+        'Date',
+        'Received Quantity',
+        'Received Currency',
+        'Sent Quantity',
+        'Sent Currency',
+        'Fee Amount',
+        'Fee Currency',
+        'Tag',
+        'Transaction ID',
+    ]
+
+    const groupedSwaps = new Map<string, UnifiedTransaction[]>()
+    const ungroupedRows: CoinTrackerRow[] = []
+
+    for (const tx of transactions) {
+        const classification = tx.manualClassification ?? tx.classification
+        if (tx.groupId && classification === 'swap') {
+            if (!groupedSwaps.has(tx.groupId)) {
+                groupedSwaps.set(tx.groupId, [])
+            }
+            groupedSwaps.get(tx.groupId)!.push(tx)
+            continue
+        }
+
+        ungroupedRows.push(mapSingleTransactionToCoinTrackerRow(tx))
+    }
+
+    const swapRows = Array.from(groupedSwaps.values())
+        .sort((a, b) => (a[0]?.timestamp ?? 0) - (b[0]?.timestamp ?? 0))
+        .flatMap(buildCoinTrackerRowsForSwapGroup)
+
+    return [
+        headers.join(','),
+        ...[...ungroupedRows, ...swapRows]
+            .sort((a, b) => a.sortTimestamp - b.sortTimestamp)
+            .map(buildCoinTrackerRow),
     ].join('\n')
 }

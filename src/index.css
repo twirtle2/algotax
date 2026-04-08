@@ -1134,6 +1134,60 @@ input:checked+.toggle-slider:before {
   justify-content: flex-end;
 }
 
+.export-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 20, 0.76);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: var(--space-md);
+  z-index: 220;
+}
+
+.export-modal {
+  width: min(440px, 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-hover);
+  background: linear-gradient(180deg, rgba(20, 29, 43, 0.98), rgba(17, 24, 34, 0.98));
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.export-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.export-modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.export-modal-header p {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.export-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.export-modal-actions .btn {
+  justify-content: center;
+}
+
+.export-modal-cancel {
+  align-self: center;
+  color: var(--color-text-secondary);
+}
+
 @media (max-width: 480px) {
   .coffee-modal {
     padding: var(--space-md);
@@ -1160,5 +1214,13 @@ input:checked+.toggle-slider:before {
 
   .coffee-modal-actions .btn {
     width: 100%;
+  }
+
+  .export-modal {
+    padding: var(--space-md);
+  }
+
+  .export-modal-actions {
+    grid-template-columns: 1fr;
   }
 }
