@@ -55,32 +55,28 @@ export default function ExportModal({ isOpen, onClose, onSelectFormat }: ExportM
                     </div>
                 </header>
 
-                <div className="export-modal-options" role="radiogroup" aria-label="Export format">
+                <div className="export-modal-options">
                     <button
                         type="button"
                         className="export-format-option"
                         onClick={() => onSelectFormat('koinly')}
-                        role="radio"
-                        aria-checked="false"
                     >
-                        <span className="export-format-option__indicator" aria-hidden="true" />
                         <span className="export-format-option__content">
                             <span className="export-format-option__title">Koinly</span>
                             <span className="export-format-option__meta">Universal CSV export</span>
                         </span>
+                        <span className="export-format-option__cta" aria-hidden="true">Download</span>
                     </button>
                     <button
                         type="button"
                         className="export-format-option"
                         onClick={() => onSelectFormat('cointracker')}
-                        role="radio"
-                        aria-checked="false"
                     >
-                        <span className="export-format-option__indicator" aria-hidden="true" />
                         <span className="export-format-option__content">
                             <span className="export-format-option__title">CoinTracker</span>
                             <span className="export-format-option__meta">Split-leg trade CSV</span>
                         </span>
+                        <span className="export-format-option__cta" aria-hidden="true">Download</span>
                     </button>
                 </div>
 
