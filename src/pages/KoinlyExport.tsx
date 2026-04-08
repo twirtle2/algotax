@@ -192,8 +192,8 @@ export default function KoinlyExport() {
     return (
         <div className="koinly-export">
             <div className="page-header">
-                <h2>Koinly Export</h2>
-                <p>Minimize your transaction count and export to Koinly-compatible CSV.</p>
+                <h2>Export</h2>
+                <p>Minimize your transaction count and export to your preferred tax software CSV format.</p>
             </div>
 
             {/* Stats Grid */}

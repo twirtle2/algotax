@@ -55,26 +55,38 @@ export default function ExportModal({ isOpen, onClose, onSelectFormat }: ExportM
                     </div>
                 </header>
 
-                <div className="export-modal-actions">
+                <div className="export-modal-options" role="radiogroup" aria-label="Export format">
                     <button
                         type="button"
-                        className="btn btn-primary"
+                        className="export-format-option"
                         onClick={() => onSelectFormat('koinly')}
+                        role="radio"
+                        aria-checked="false"
                     >
-                        Koinly
+                        <span className="export-format-option__indicator" aria-hidden="true" />
+                        <span className="export-format-option__content">
+                            <span className="export-format-option__title">Koinly</span>
+                            <span className="export-format-option__meta">Universal CSV export</span>
+                        </span>
                     </button>
                     <button
                         type="button"
-                        className="btn btn-primary"
+                        className="export-format-option"
                         onClick={() => onSelectFormat('cointracker')}
+                        role="radio"
+                        aria-checked="false"
                     >
-                        CoinTracker
+                        <span className="export-format-option__indicator" aria-hidden="true" />
+                        <span className="export-format-option__content">
+                            <span className="export-format-option__title">CoinTracker</span>
+                            <span className="export-format-option__meta">Split-leg trade CSV</span>
+                        </span>
                     </button>
                 </div>
 
                 <button
                     type="button"
-                    className="btn-text export-modal-cancel"
+                    className="export-modal-cancel"
                     onClick={onClose}
                 >
                     Cancel
